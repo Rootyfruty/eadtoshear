@@ -1,0 +1,50 @@
+// Installiere die notwendigen Pakete:
+// npm install express mongoose body-parser
+
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+// Verbinde dich mit der MongoDB-Datenbank
+mongoose.connect('mongodb://localhost:27017/foodshare', { useNewUrlParser: true, useUnifiedTopology: true });
+
+// Definiere das Schema und das Modell für ein Angebot
+const offerSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  location: String,
+  postedBy: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Offer = mongoose.model('Offer', offerSchema);
+
+// API-Endpunkt zum Erstellen eines neuen Angebots
+app.post('/api/offers', async (req, res) => {
+  const offer = new Offer(req.body);
+  try {
+    await offer.save();
+    res.status(201).send(offer);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+// API-Endpunkt zum Abrufen aller Angebote
+app.get('/api/offers', async (req, res) => {
+  try {
+    const offers = await Offer.find();
+    res.status(200).send(offers);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+// Starte den Server
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server läuft auf Port ${port}`);
+});
